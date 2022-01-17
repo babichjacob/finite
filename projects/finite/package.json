@@ -1,0 +1,26 @@
+{
+	"name": "@babichjacob/finite",
+	"private": true,
+	"version": "0.0.1",
+	"description": "A tiny wrapper around svelte-fsm to accommodate my preferences",
+	"author": "J / Jacob Babich <jacobbabichpublic+git@gmail.com>",
+	"keywords": [
+		"svelte",
+		"svelte-fsm",
+		"fsm",
+		"finite"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/babichjacob/finite.git"
+	},
+	"bugs": {
+		"url": "https://github.com/babichjacob/finite/issues"
+	},
+	"homepage": "https://github.com/babichjacob/finite",
+	"type": "module",
+	"dependencies": {
+		"svelte-fsm": "^1.1.2"
+	}
+}
