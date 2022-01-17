@@ -1,7 +1,7 @@
 {
 	"name": "@babichjacob/finite",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "A tiny wrapper around svelte-fsm to accommodate my preferences",
 	"author": "J / Jacob Babich <jacobbabichpublic+git@gmail.com>",
 	"keywords": [
