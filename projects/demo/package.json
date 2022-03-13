@@ -12,7 +12,8 @@
     "@babichjacob/finite": "workspace:*",
     "@sveltejs/adapter-auto": "next",
     "@sveltejs/kit": "next",
-    "svelte": "^3.46.2"
+    "svelte": "^3.46.4",
+    "svelte-fsm": "^1.1.2"
   },
   "type": "module"
 }
