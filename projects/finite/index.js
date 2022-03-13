@@ -7,34 +7,52 @@ import fsm from "svelte-fsm";
 
 /**
  * @typedef {NotReadonly<Parameters<typeof import("svelte-fsm").default>[1]>} Args
- * @typedef { Args[keyof Args] } Actions
+ * @typedef {Args[keyof Args]} BaseActions
  */
 
 /**
- * @template {string} State
- * @typedef { function(): Promise<State> } Auto
+ * @typedef {BaseActions[keyof Omit<BaseActions, "_enter" | "_exit">]} ActionFunction
  */
 
 /**
- * @template {string} State
- * @typedef {Omit<Actions, "_enter" | "_exit"> & { __auto: Auto<State> }} ActionsWrapper
+ * @typedef {BaseActions[keyof Pick<BaseActions, "_enter" | "_exit">]} LifecycleFunction
  */
 
 /**
- * @template {string} State
- * @typedef {{ [k in keyof Args]: Actions & { __finite_auto?: (data: State) => State } }} ArgsExtended
+ * @template State
+ * @typedef {function(): Promise<State>} Auto
  */
 
 /**
- * @template {string} State
- * @param {Record<State, ActionsWrapper<State>>} states
+ * @template {string | symbol} State
+ * @template {string | symbol} Action
+ * @typedef {{ [action in Action]?: ActionFunction } & { __auto?: Auto<State> }} ActionsWrapper
+ */
+
+/**
+ * @template {string | symbol} State
+ * @template Actions
+ * @typedef {{ [k in State]: Actions & { _enter?: LifecycleFunction, _exit?: LifecycleFunction }} & { "*": { __finite_auto?: (data: State) => State } }} ArgsExtended
+ */
+
+// TODO: type the arguments for the action function
+// TODO: not need to override the return type
+// Maybe I should just re-implement svelte-fsm's API instead of wrapping it
+/**
+ * @template {string | symbol} State
+ * @template {string | symbol} Action
+ * @template {State} ReturnedState
+ * @param {Record<State, ActionsWrapper<ReturnedState, Action>>} states
  * @param {State} [initial]
+ * @returns {{ subscribe: function(function(State): void): (function(): void)} & Record<Exclude<Action, "__auto">, function(any): void>}
  */
 const finite = (states, initial) => {
   if (!initial) initial = /** @type {State[]} */ (Object.keys(states))[0];
 
-  /** @type {ArgsExtended<State>} */
-  const args = { "*": {} };
+  /** @type {ArgsExtended<State, Record<Action, ActionFunction>>} */
+  const args = /** @type {any} */ ({
+    "*": { __finite_auto: /** @param {State} state */ (state) => state },
+  });
 
   /** @type {Record<string, boolean>} */
   const waiting = {};
@@ -44,46 +62,45 @@ const finite = (states, initial) => {
   for (const [
     state,
     actions,
-  ] of /** @type {[State, ActionsWrapper<State>][]} */ (
+  ] of /** @type {[State, (typeof states)[State]][]} */ (
     Object.entries(states)
   )) {
-    args[state] = { ...actions };
-    if ("__auto" in actions) {
-      const __auto = actions["__auto"];
+    const { __auto, ...copy } = actions;
+    // TypeScript is cool and does good things
+    args[state] = /** @type {any} */ (copy);
 
-      const _enter = () => {
-        const promise = __auto();
+    if (!__auto) continue;
 
-        const id = counter;
-        counter += 1;
+    const _enter = () => {
+      const promise = __auto();
 
-        waiting[id] = true;
-        promise.then((next) => {
-          if (waiting[id]) {
-            // @ts-ignore
-            machine.__finite_auto(next);
-          }
+      const id = counter;
+      counter += 1;
 
-          delete waiting[id];
-        });
-      };
-
-      const _exit = () => {
-        for (const id of Object.keys(waiting)) {
-          waiting[id] = false;
+      waiting[id] = true;
+      promise.then((next) => {
+        if (waiting[id]) {
+          // @ts-ignore
+          machine.__finite_auto(next);
         }
-      };
 
-      delete args[state]["__auto"];
-      args[state]._enter = _enter;
-      args[state]._exit = _exit;
-    }
+        delete waiting[id];
+      });
+    };
+
+    const _exit = () => {
+      for (const id of Object.keys(waiting)) {
+        waiting[id] = false;
+      }
+    };
+
+    args[state]._enter = _enter;
+    args[state]._exit = _exit;
   }
 
-  args["*"].__finite_auto = (state) => state;
-
-  const machine = fsm(initial, args);
-  return machine;
+  // TypeScript is cool and does good things
+  const machine = fsm(/** @type {string} */ (initial), args);
+  return /** @type {any} */ (machine);
 };
 
 export default finite;
