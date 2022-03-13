@@ -1,4 +1,5 @@
 <script>
+  // @ts-check
   import finite from "@babichjacob/finite";
 
   /** @param {number} ms */
@@ -66,10 +67,12 @@
     },
     green: {
       _enter() {
+        // @ts-expect-error - Typed wrongly upstream unfortunately
         this.advance.debounce(2_000);
       },
-
+      
       _exit() {
+        // @ts-expect-error - Typed wrongly upstream unfortunately
         this.advance.debounce(null);
       },
 
